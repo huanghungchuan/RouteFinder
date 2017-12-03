@@ -38,10 +38,12 @@ public class SearchRoute {
         this.ma = ma;
     }
 
+    //Start getting JSON data by entering the url in String as parameter.
     public void search() throws UnsupportedEncodingException {
         new DownloadJson().execute(getUrl());
     }
 
+    //Return whole url in String.
     public String getUrl() throws UnsupportedEncodingException {
         String urlOrigin = URLEncoder.encode(origin, "utf-8");
         String urlDestination = URLEncoder.encode(destination, "utf-8");
@@ -49,18 +51,21 @@ public class SearchRoute {
         return SEARCH_URL + "origin=" + urlOrigin + "&destination=" + urlDestination + "&key=" + KEY;
     }
 
+    //The class that downloads JSON data, gets all the information needed and decode polyline.
     private class DownloadJson extends AsyncTask<String, Void, String> {
         @Override
         protected String doInBackground(String... params) {
             String url = params[0];
             HttpsURLConnection con = null;
             try {
+
+                //get connection
                 URL url1 = new URL(url);
                 con = (HttpsURLConnection)url1.openConnection();
                 BufferedReader bReader = new BufferedReader(new InputStreamReader(con.getInputStream()));
                 StringBuilder sBuilder = new StringBuilder();
 
-
+                //record every line of JSON data
                 String line = null;
                 while ((line = bReader.readLine()) != null){
                     sBuilder.append(line + "\n");
@@ -78,6 +83,7 @@ public class SearchRoute {
         @Override
         protected void onPostExecute(String s) {
             try {
+                //After getting every line of JSON data, get the needed data from it.
                 parseJSonData(s);
             } catch (JSONException e) {
                 e.printStackTrace();
@@ -85,41 +91,40 @@ public class SearchRoute {
         }
 
         private void parseJSonData(String s) throws JSONException{
-
+            /*
+             *  Get geocoder_status to check if there is a route found between origin and destination
+             *  geocoded_waypoints for polyline.
+             */
             if(s != null){
                 JSONObject rawData = new JSONObject(s);
                 JSONArray routes = rawData.getJSONArray("routes");
                 List<List<LatLng>> listRoutes = new ArrayList<>();
-                try {
-                    JSONArray geocoded_waypoints = rawData.getJSONArray("geocoded_waypoints");
-                    JSONObject geocoded_waypoint = geocoded_waypoints.getJSONObject(0);
-                    String geocoder_status = geocoded_waypoint.getString("geocoder_status");
-                    if(!geocoder_status.equals("OK")){
-                        ma.printToast("No Result");
-                        return;
-                    }
+                JSONArray geocoded_waypoints = rawData.getJSONArray("geocoded_waypoints");
+                JSONObject geocoded_waypoint = geocoded_waypoints.getJSONObject(0);
+                String geocoder_status = geocoded_waypoint.getString("geocoder_status");
+                if(!geocoder_status.equals("OK")){
+                    ma.printToast("No Result");
+                    return;
+                }
 
-                    for(int i = 0; i < routes.length(); i++){
-                        JSONObject route = routes.getJSONObject(i);
+                for(int i = 0; i < routes.length(); i++){
+                    JSONObject route = routes.getJSONObject(i);
 
-                        JSONObject overview_polyline = route.getJSONObject("overview_polyline");
-                        JSONArray legs = route.getJSONArray("legs");
-                        JSONObject leg = legs.getJSONObject(0);
-                        JSONObject originLocation = leg.getJSONObject("start_location");
+                    JSONObject overview_polyline = route.getJSONObject("overview_polyline");
+                    JSONArray legs = route.getJSONArray("legs");
+                    JSONObject leg = legs.getJSONObject(0);
+                    JSONObject originLocation = leg.getJSONObject("start_location");
 
-                        ma.setStartLocation(new LatLng(originLocation.getDouble("lat"), originLocation.getDouble("lng")));
+                    ma.setStartLocation(new LatLng(originLocation.getDouble("lat"), originLocation.getDouble("lng")));
 
-                        listRoutes.add(decodePoly(overview_polyline.getString("points")));
-                        ma.receivePoly(listRoutes);
-                    }
-                } catch (JSONException e) {
-                    e.printStackTrace();
+                    listRoutes.add(decodePoly(overview_polyline.getString("points")));
+                    ma.receivePoly(listRoutes);
                 }
             }
             else
                 return;
         }
-        //from http://jeffreysambells.com/2010/05/27/decoding-polylines-from-google-maps-direction-api-with-java
+        //convert overview_polyline into LatLng
         private List<LatLng> decodePoly(String encoded) {
 
             List<LatLng> poly = new ArrayList<>();

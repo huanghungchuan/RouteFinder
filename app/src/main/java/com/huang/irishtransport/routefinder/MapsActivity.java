@@ -69,26 +69,28 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
-
-        // Add a marker in Sydney and move the camera
         LatLng dublin = new LatLng(53.35, -6.266);
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(dublin,10));
     }
 
+    //When the button is clicked, start searching process.
+    //Place API key to SearchRoute.class, google_maps_api.xml and AndroidManifest.xml
     public void searchRoute(){
         origin = etOrigin.getText().toString();
         destination = etDestination.getText().toString();
 
+        //Check if the user has entered their origin and destination.
         if(origin.isEmpty() || destination.isEmpty()){
             printToast("Please enter your origin/destination");
             return;
         }
-
+        //Clear the polylines from last time.
         if(polylineList.size() > 0){
             for(Polyline polyline: polylineList){
                 polylineList.remove(polyline);
             }
         }
+        //Start searching process.
         try {
             new SearchRoute(this, origin, destination).search();
         } catch (UnsupportedEncodingException e) {
@@ -96,6 +98,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
     }
 
+    //Print toast by entering the message to parameter.
     public void printToast(String s){
         Toast toast = Toast.makeText(this, s, Toast.LENGTH_SHORT);
         toast.show();
@@ -105,14 +108,18 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         this.startLocation = location;
     }
 
+    //After JSON data was parsed and decoded, draw the polylines on the map.
     public void receivePoly(List<List<LatLng>> data){
         polylineList = new ArrayList<>();
+        //Move the origin to the center of the map.
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(startLocation, 15));
+
+        //Polyline style
         PolylineOptions polylineOptions = new PolylineOptions()
                 .geodesic(true)
                 .color(Color.BLUE)
-                .width(10);
-
+                .width(12);
+        //Draw polylines
         for(List<LatLng> polylines : data){
             for(int i = 0; i < polylines.size(); i++){
                 polylineOptions.add(polylines.get(i));
