@@ -4,12 +4,17 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.common.api.Status;
+import com.google.android.gms.location.places.Place;
+import com.google.android.gms.location.places.ui.PlaceAutocompleteFragment;
+import com.google.android.gms.location.places.ui.PlaceSelectionListener;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -25,16 +30,16 @@ import java.util.List;
 
 import Class.SearchRoute;
 
-public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
+public class MapsActivity extends FragmentActivity implements OnMapReadyCallback{
 
-    private EditText etOrigin;
-    private EditText etDestination;
+    private static final String TAG = "AutoComplete";
     private Button btnSearch;
-    private String origin;
+    private String originAddress = null;
+    private String destinationAddress = null;
     private LatLng startLocation;
-    private String destination;
     private List<Polyline> polylineList = new ArrayList<>();
     private GoogleMap mMap;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,14 +49,37 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
-
-        etOrigin = (EditText) findViewById(R.id.etOrigin);
-        etDestination = (EditText) findViewById(R.id.etDestination);
         btnSearch = (Button) findViewById(R.id.btnSearch);
         btnSearch.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 searchRoute();
+            }
+        });
+        PlaceAutocompleteFragment originAutocompleteFragment = (PlaceAutocompleteFragment) getFragmentManager().findFragmentById(R.id.place_autocomplete_fragment_origin);
+        originAutocompleteFragment.setHint("Please enter your origin");
+        originAutocompleteFragment.setOnPlaceSelectedListener(new PlaceSelectionListener() {
+            @Override
+            public void onPlaceSelected(Place place) {
+                originAddress = place.getAddress().toString();
+            }
+
+            @Override
+            public void onError(Status status) {
+                this.onError(status);
+            }
+        });
+        PlaceAutocompleteFragment destinationAutocompleteFragment = (PlaceAutocompleteFragment) getFragmentManager().findFragmentById(R.id.place_autocomplete_fragment_destination);
+        destinationAutocompleteFragment.setHint("Please enter your destination");
+        destinationAutocompleteFragment.setOnPlaceSelectedListener(new PlaceSelectionListener() {
+            @Override
+            public void onPlaceSelected(Place place) {
+                destinationAddress = place.getAddress().toString();
+            }
+
+            @Override
+            public void onError(Status status) {
+                this.onError(status);
             }
         });
     }
@@ -76,11 +104,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     //When the button is clicked, start searching process.
     //Place API key to SearchRoute.class, google_maps_api.xml and AndroidManifest.xml
     public void searchRoute(){
-        origin = etOrigin.getText().toString();
-        destination = etDestination.getText().toString();
-
         //Check if the user has entered their origin and destination.
-        if(origin.isEmpty() || destination.isEmpty()){
+        if(originAddress == null || destinationAddress == null){
             printToast("Please enter your origin/destination");
             return;
         }
@@ -92,7 +117,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
         //Start searching process.
         try {
-            new SearchRoute(this, origin, destination).search();
+            new SearchRoute(this, originAddress, destinationAddress).search();
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
         }
@@ -126,5 +151,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             }
             polylineList.add(mMap.addPolyline(polylineOptions));
         }
+    }
+    public void onError(Status status){
+        Log.e(TAG, "onError: Status = " + status.toString());
+
+        Toast.makeText(this, "Place selection failed: " + status.getStatusMessage(),
+                Toast.LENGTH_SHORT).show();
     }
 }

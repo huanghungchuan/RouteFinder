@@ -27,7 +27,7 @@ import javax.net.ssl.HttpsURLConnection;
 
 public class SearchRoute {
     private final String SEARCH_URL = "https://maps.googleapis.com/maps/api/directions/json?";
-    private final String KEY="Place Your Key Here";
+    private final String KEY="YOUR_API_KEY";
     String origin;
     String destination;
     MapsActivity ma;

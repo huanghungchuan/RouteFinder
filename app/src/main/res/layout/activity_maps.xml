@@ -5,29 +5,18 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     tools:context="com.huang.irishtransport.routefinder.MapsActivity">
-    <EditText
+    <fragment
+        android:id="@+id/place_autocomplete_fragment_origin"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:maxLines="1"
-        android:inputType="text"
-        android:hint="Origin"
-        android:id="@+id/etOrigin"/>
-
-    <AutoCompleteTextView
-        android:id="@+id/autoCompleteTextView"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:ems="10"
-        android:hint="Please enter your place"
-
+        android:name="com.google.android.gms.location.places.ui.PlaceAutocompleteFragment"
         />
-    <EditText
+    <fragment
+        android:id="@+id/place_autocomplete_fragment_destination"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:maxLines="1"
-        android:inputType="text"
-        android:hint="Destination"
-        android:id="@+id/etDestination"/>
+        android:name="com.google.android.gms.location.places.ui.PlaceAutocompleteFragment"
+        />
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
